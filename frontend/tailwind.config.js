@@ -8,6 +8,7 @@
  * Success (confirmé): #22C55E
  * Warning / en attente surfaces: #F59E0B
  * Destructive:      #EF4444
+ * Auth hero navy:  #113362 (login gradient top)
  */
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -24,6 +25,7 @@ module.exports = {
         primary: '#F27427',
         'on-primary': '#FFFFFF',
         navy: '#1A2B48',
+        'auth-navy': '#113362',
         background: '#F8F9FB',
         surface: '#FFFFFF',
         border: '#E8EAEF',
@@ -49,6 +51,7 @@ module.exports = {
         button: '12px',
         input: '12px',
         fab: '28px',
+        pill: '9999px',
       },
       spacing: {
         'screen-x': '20px',
@@ -62,14 +65,16 @@ module.exports = {
         badge: ['12px', { lineHeight: '16px' }],
       },
       fontFamily: {
-        sans: ['Inter_400Regular'],
-        'sans-medium': ['Inter_500Medium'],
-        'sans-semibold': ['Inter_600SemiBold'],
-        'sans-bold': ['Inter_700Bold'],
+        sans: ['Poppins_400Regular'],
+        'sans-medium': ['Poppins_500Medium'],
+        'sans-semibold': ['Poppins_600SemiBold'],
+        'sans-bold': ['Poppins_700Bold'],
       },
       boxShadow: {
         card: '0px 2px 8px rgba(26, 43, 72, 0.08)',
         fab: '0px 4px 14px rgba(242, 116, 39, 0.35)',
+        'login-cta':
+          '0px 8px 20px rgba(242, 116, 39, 0.38)',
         segmented: '0px 1px 3px rgba(26, 43, 72, 0.06)',
       },
     },

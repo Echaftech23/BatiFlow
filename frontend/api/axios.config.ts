@@ -7,7 +7,6 @@ import { queryClient } from '@/services/query/queryClient';
 import { clearAccessToken, getAccessToken } from '@/services/storage/secureStore';
 
 const axiosInstance = axios.create({
-  baseURL: getApiBaseUrl(),
   timeout: 15_000,
   headers: {
     'Content-Type': 'application/json',
@@ -16,6 +15,7 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    config.baseURL = getApiBaseUrl();
     const isPublic = config.headers?.['x-public-request'] === 'true';
     if (isPublic) {
       delete config.headers['x-public-request'];
@@ -36,7 +36,14 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status ?? 0;
     const body = error.response?.data as ApiErrorBody | undefined;
     const message = toMessage(body, error.message || `Erreur ${String(status)}`);
-    if (status === 401) {
+    const reqUrl = error.config?.url ?? '';
+    // 401 on login / verify-email means bad credentials or code — not an expired session.
+    const skipGlobalLogout =
+      status === 401 &&
+      (reqUrl.includes('/auth/login') ||
+        reqUrl.includes('/auth/verify-email') ||
+        reqUrl.includes('/auth/reset-password'));
+    if (status === 401 && !skipGlobalLogout) {
       await clearAccessToken();
       queryClient.clear();
       router.replace('/(auth)/login');

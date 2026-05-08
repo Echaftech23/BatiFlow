@@ -6,7 +6,7 @@ type Props = {
 };
 
 const DEFAULT_CLASS =
-  'font-sans mt-1 text-medium text-destructive leading-none tracking-normal';
+  'mt-3 text-medium text-destructive leading-none tracking-normal';
 
 export function FieldError({ message, className }: Props) {
   if (!message) return null;

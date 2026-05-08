@@ -93,6 +93,22 @@ export class UsersService {
     };
   }
 
+  async updatePasswordHashForVerifiedEmail(
+    email: string,
+    passwordHash: string,
+  ): Promise<void> {
+    const normalized = email.toLowerCase().trim();
+    const result = await this.userModel
+      .updateOne(
+        { email: normalized, emailVerified: true },
+        { $set: { passwordHash } },
+      )
+      .exec();
+    if (result.matchedCount === 0) {
+      throw new NotFoundException('User not found');
+    }
+  }
+
   private mergeProfile(
     existing: UserProfile | undefined,
     patch: UpdateProfileDto | undefined,

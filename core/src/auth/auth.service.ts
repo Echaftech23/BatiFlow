@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,10 +14,12 @@ import * as crypto from 'node:crypto';
 import { Model } from 'mongoose';
 import { FirebaseAdminService } from '../firebase/firebase-admin.service';
 import { UsersService } from '../users/users.service';
+import type { LoginDto } from './dto/login.dto';
 import type { RegisterDto } from './dto/register.dto';
 import type { ResendVerificationDto } from './dto/resend-verification.dto';
+import type { ForgotPasswordDto } from './dto/forgot-password.dto';
+import type { ResetPasswordDto } from './dto/reset-password.dto';
 import type { VerifyEmailDto } from './dto/verify-email.dto';
-import type { LoginDto } from './dto/login.dto';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
 import {
   OTP_PURPOSE_REGISTER,
@@ -24,6 +27,14 @@ import {
   OtpChallengeDocument,
 } from './schemas/otp-challenge.schema';
 import { OtpSendLog, OtpSendLogDocument } from './schemas/otp-send-log.schema';
+import {
+  PasswordResetChallenge,
+  PasswordResetChallengeDocument,
+} from './schemas/password-reset-challenge.schema';
+import {
+  PasswordResetSendLog,
+  PasswordResetSendLogDocument,
+} from './schemas/password-reset-send-log.schema';
 import { Resend } from 'resend';
 
 const BCRYPT_ROUNDS = 12;
@@ -40,6 +51,10 @@ export class AuthService {
     private readonly otpModel: Model<OtpChallengeDocument>,
     @InjectModel(OtpSendLog.name)
     private readonly otpSendLogModel: Model<OtpSendLogDocument>,
+    @InjectModel(PasswordResetChallenge.name)
+    private readonly passwordResetModel: Model<PasswordResetChallengeDocument>,
+    @InjectModel(PasswordResetSendLog.name)
+    private readonly passwordResetSendLogModel: Model<PasswordResetSendLogDocument>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
   ) {
@@ -178,6 +193,141 @@ export class AuthService {
         emailVerified: user.emailVerified,
       },
     };
+  }
+
+  async requestPasswordReset(dto: ForgotPasswordDto): Promise<void> {
+    const email = dto.email.toLowerCase().trim();
+    const user = await this.usersService.findByEmailWithPasswordHash(email);
+    if (!user?.passwordHash || !user.emailVerified) {
+      return;
+    }
+
+    const maxSends = this.config.get<number>(
+      'PASSWORD_RESET_MAX_SENDS_PER_HOUR',
+      5,
+    );
+    const ttlMinutes = this.config.get<number>(
+      'PASSWORD_RESET_TTL_MINUTES',
+      60,
+    );
+
+    await this.assertPasswordResetSendRate(email, maxSends);
+
+    const rawToken = crypto.randomBytes(32).toString('base64url');
+    const tokenHash = this.hashPasswordResetToken(rawToken);
+    const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
+
+    await this.passwordResetModel
+      .findOneAndUpdate(
+        { email },
+        { $set: { tokenHash, expiresAt } },
+        { upsert: true, new: true },
+      )
+      .exec();
+
+    const linkBase = (
+      this.config.get<string>('PASSWORD_RESET_LINK_BASE') ??
+      'batiflow://reset-password'
+    ).trim() || 'batiflow://reset-password';
+    const sep = linkBase.includes('?') ? '&' : '?';
+    const resetUrl = `${linkBase}${sep}token=${encodeURIComponent(rawToken)}`;
+
+    const sendLog = await this.passwordResetSendLogModel.create({ email });
+    try {
+      await this.sendPasswordResetEmail(email, resetUrl, ttlMinutes);
+    } catch (err) {
+      await this.passwordResetSendLogModel.deleteOne({ _id: sendLog._id }).exec();
+      await this.passwordResetModel.deleteOne({ email }).exec();
+      throw err;
+    }
+  }
+
+  async resetPasswordWithToken(dto: ResetPasswordDto): Promise<void> {
+    const tokenHash = this.hashPasswordResetToken(dto.token);
+    const challenge = await this.passwordResetModel
+      .findOne({ tokenHash })
+      .exec();
+
+    if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException('Invalid or expired reset link');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    try {
+      await this.usersService.updatePasswordHashForVerifiedEmail(
+        challenge.email,
+        passwordHash,
+      );
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw new UnauthorizedException('Invalid or expired reset link');
+      }
+      throw err;
+    }
+
+    await this.passwordResetModel.deleteOne({ _id: challenge._id }).exec();
+  }
+
+  private hashPasswordResetToken(rawToken: string): string {
+    const pepper = this.config.getOrThrow<string>('OTP_PEPPER');
+    return crypto
+      .createHash('sha256')
+      .update(`${rawToken}:${pepper}`, 'utf8')
+      .digest('hex');
+  }
+
+  private async assertPasswordResetSendRate(
+    email: string,
+    maxPerHour: number,
+  ): Promise<void> {
+    const since = new Date(Date.now() - 60 * 60 * 1000);
+    const count = await this.passwordResetSendLogModel
+      .countDocuments({
+        email,
+        createdAt: { $gte: since },
+      })
+      .exec();
+    if (count >= maxPerHour) {
+      throw new ConflictException(
+        'Too many password reset emails sent; try again later',
+      );
+    }
+  }
+
+  private async sendPasswordResetEmail(
+    to: string,
+    resetUrl: string,
+    ttlMinutes: number,
+  ): Promise<void> {
+    const from = this.config.getOrThrow<string>('RESEND_FROM_EMAIL');
+
+    if (!this.resend) {
+      this.logger.warn(
+        `RESEND_API_KEY is not set; password reset link (dev): ${resetUrl}`,
+      );
+      return;
+    }
+
+    const { error } = await this.resend.emails.send({
+      from,
+      to,
+      subject: 'BatiFlow — Réinitialisation du mot de passe',
+      text: [
+        'Bonjour,',
+        '',
+        'Pour choisir un nouveau mot de passe, ouvrez ce lien dans l’application BatiFlow :',
+        resetUrl,
+        '',
+        `Ce lien expire dans ${String(ttlMinutes)} minutes.`,
+        '',
+        'Si vous n’avez pas demandé cette réinitialisation, ignorez ce message.',
+      ].join('\n'),
+    });
+
+    if (error) {
+      this.logger.error(`Resend error: ${JSON.stringify(error)}`);
+      throw new BadRequestException('Could not send password reset email');
+    }
   }
 
   private async signAccessToken(payload: JwtPayload): Promise<string> {

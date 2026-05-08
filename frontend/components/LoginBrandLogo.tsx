@@ -6,7 +6,7 @@ type Props = {
 };
 
 
-export function LoginBrandLogo({ width = 40, height }: Props) {
+export function LoginBrandLogo({ width = 40, height = 35 }: Props) {
   const h = height ?? Math.round((width * 36) / 40);
   return (
     <Svg width={width} height={h} viewBox="0 0 40 36" fill="none">

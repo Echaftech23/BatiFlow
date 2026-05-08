@@ -1,4 +1,9 @@
-import { ActivityIndicator, Pressable, Text, type ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  type ViewStyle,
+} from 'react-native';
 
 type Props = {
   title: string;

@@ -11,7 +11,8 @@ import {
 import { Quicksand_700Bold } from '@expo-google-fonts/quicksand';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AppProviders } from '../providers/AppProviders';
 
@@ -29,9 +30,15 @@ export default function RootLayout() {
   }
 
   return (
-    <AppProviders>
+    <GestureHandlerRootView style={styles.root}>
+      <AppProviders>
         <Stack screenOptions={{ headerShown: false }} />
         <StatusBar style="dark" />
-    </AppProviders>
+      </AppProviders>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

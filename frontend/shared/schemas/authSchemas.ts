@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  PASSWORD_STRENGTH_MESSAGE_FR,
+  PASSWORD_STRENGTH_REGEX,
+} from '@/shared/utils/passwordRules';
+
 export const authSessionSchema = z.object({
   accessToken: z.string().min(1),
   user: z.object({
@@ -38,6 +43,17 @@ export const registerRequestSchema = z.object({
       zip: z.string().optional(),
     })
     .optional(),
+});
+
+export const forgotPasswordRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+export const resetPasswordRequestSchema = z.object({
+  token: z.string().min(40, 'Lien invalide ou incomplet'),
+  password: z
+    .string()
+    .regex(PASSWORD_STRENGTH_REGEX, PASSWORD_STRENGTH_MESSAGE_FR),
 });
 
 export type AuthSession = z.infer<typeof authSessionSchema>;

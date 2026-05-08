@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '@/services/config/env';
+import { resolveApiUrl } from '@/services/config/env';
 
 type AuthFirebaseResponse = {
   accessToken: string;
@@ -13,9 +13,7 @@ type ApiErrorBody = {
 export async function exchangeFirebaseIdTokenForJwt(
   idToken: string,
 ): Promise<AuthFirebaseResponse> {
-  const base = getApiBaseUrl();
-
-  const res = await fetch(`${base}/auth/firebase`, {
+  const res = await fetch(resolveApiUrl('/auth/firebase'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ idToken }),

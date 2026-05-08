@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoginBrandLogo } from '../LoginBrandLogo';
+import { SocialAuthPanel } from '../SocialAuthPanel';
 import { AppTextInput, FormField, PasswordInput, PrimaryButton } from '../ui';
 import { ApiError } from '@/api/types';
 import { useLoginMutation } from '@/hooks/auth/useLoginMutation';
@@ -40,7 +41,7 @@ export default function LoginScreen() {
     setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema, undefined, { mode: 'sync' }),
     defaultValues: { email: '', password: '' },
   });
 
@@ -63,20 +64,23 @@ export default function LoginScreen() {
 
   return (
     <View className="relative h-full bg-white">
-      <View className="absolute inset-0 left-[-170px] top-[-220px] h-[480px] w-[640px] overflow-hidden rounded-full bg-auth-navy" />
+      <View
+        className="absolute inset-0 left-[-170px] top-[-220px] h-[480px] w-[640px] overflow-hidden rounded-full bg-auth-navy"
+        pointerEvents="none"
+      />
       <View className="flex-1 flex-col justify-between gap-36">
         <StatusBar style="light" />
         <View className="relative flex overflow-hidden px-7 pb-5" style={{ paddingTop: insets.top + 30 }}>
           <View>
-            <LoginBrandLogo />
-            <Text className="mt-5 font-sans text-body leading-6 text-white">
+            <LoginBrandLogo width={40} height={35} />
+            <Text className="mt-5 text-[16px] leading-6 text-white">
               Gerez vos chantiers et vos devis en toute simplicite.
             </Text>
           </View>
         </View>
         <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView className="flex-1" contentContainerClassName="px-screen-x pb-10 pt-1" keyboardShouldPersistTaps="handled" style={{ marginTop: -18 }}>
-            {rootMessage ? <Text className="mb-2 font-sans text-caption text-destructive">{rootMessage}</Text> : null}
+            {rootMessage ? <Text className="mb-2 text-caption text-destructive">{rootMessage}</Text> : null}
             <FormField label="Adresse e-mail" stacked={false} error={errors.email?.message}>
               <Controller
                 control={control}
@@ -97,15 +101,25 @@ export default function LoginScreen() {
             </FormField>
             <Link href="/(auth)/forgot-password" asChild>
               <Pressable className="mt-3 self-end">
-                <Text className="font-sans text-caption text-muted-foreground">Mot de passe oublie ?</Text>
+                <Text className="text-badge font-medium text-[#525252]">Mot de passe oublie ?</Text>
               </Pressable>
             </Link>
-            <PrimaryButton title="Se connecter" loading={isSubmitting} onPress={() => void handleSubmit(onSubmit)()} style={CTA_SHADOW} className="mt-12 rounded-pill bg-primary py-4 disabled:opacity-60" />
+            <PrimaryButton
+              title="Se connecter"
+              loading={isSubmitting || loginMutation.isPending}
+              onPress={() => void handleSubmit(onSubmit)()}
+              style={CTA_SHADOW}
+              className="mt-12 rounded-pill bg-primary py-4 disabled:opacity-60"
+            />
+            <SocialAuthPanel
+              mode="login"
+              onAuthenticated={() => router.replace('/(app)/(tabs)')}
+            />
             <Link href="/(auth)/register" asChild>
               <Pressable className="mt-8">
-                <Text className="text-center font-sans text-body text-muted-foreground">
+                <Text className="text-center text-badge text-muted-foreground">
                   Pas encore de compte ?{' '}
-                  <Text className="font-sans-medium text-badge text-navy">Creer un compte</Text>
+                  <Text className="text-badge font-medium text-navy">Creer un compte</Text>
                 </Text>
               </Pressable>
             </Link>

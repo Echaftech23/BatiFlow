@@ -32,10 +32,10 @@ export function RegisterHeader({ currentStep, description }: Props) {
           className="absolute left-0 top-0 z-10 h-10 w-10 items-center justify-center rounded-full bg-surface"
           style={BACK_SHADOW}
         >
-          <ChevronLeft size={22} color="#6B7280" />
+          <ChevronLeft size={22} color="#6B7280" strokeWidth={2.5} />
         </Pressable>
         <View className="items-center pt-0.5">
-          <RegisterBrandLogo width={44} />
+          <RegisterBrandLogo width={40} height={35} />
           <Text className="mx-4 mt-4 text-center text-body leading-6 text-navy">
             {description}
           </Text>

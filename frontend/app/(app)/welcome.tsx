@@ -63,7 +63,7 @@ export default function WelcomeScreen() {
       >
         <View className="px-screen-x">
           <View className="items-center">
-            <RegisterBrandLogo width={40} />
+            <RegisterBrandLogo width={40} height={35} />
           </View>
           <Text className="mt-6 text-center font-sans-bold text-[20px] text-[#1A2B48]">
             Bienvenue, Thomas !

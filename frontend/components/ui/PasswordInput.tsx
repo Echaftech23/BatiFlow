@@ -12,6 +12,7 @@ type Props = {
   onBlur: () => void;
   showPassword: boolean;
   onTogglePassword: () => void;
+  placeholder?: string;
 };
 
 export function PasswordInput({
@@ -20,6 +21,7 @@ export function PasswordInput({
   onBlur,
   showPassword,
   onTogglePassword,
+  placeholder = '••••••••',
 }: Props) {
   return (
     <View className="relative mt-2">
@@ -29,7 +31,7 @@ export function PasswordInput({
         onBlur={onBlur}
         secureTextEntry={!showPassword}
         autoComplete="password"
-        placeholder="••••••••"
+        placeholder={placeholder}
         placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
         className={PASSWORD_FIELD_INPUT_CLASS}
       />

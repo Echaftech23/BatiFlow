@@ -14,6 +14,14 @@ import {
   OtpChallengeSchema,
 } from './schemas/otp-challenge.schema';
 import { OtpSendLog, OtpSendLogSchema } from './schemas/otp-send-log.schema';
+import {
+  PasswordResetChallenge,
+  PasswordResetChallengeSchema,
+} from './schemas/password-reset-challenge.schema';
+import {
+  PasswordResetSendLog,
+  PasswordResetSendLogSchema,
+} from './schemas/password-reset-send-log.schema';
 
 @Module({
   imports: [
@@ -22,6 +30,11 @@ import { OtpSendLog, OtpSendLogSchema } from './schemas/otp-send-log.schema';
     MongooseModule.forFeature([
       { name: OtpChallenge.name, schema: OtpChallengeSchema },
       { name: OtpSendLog.name, schema: OtpSendLogSchema },
+      { name: PasswordResetChallenge.name, schema: PasswordResetChallengeSchema },
+      {
+        name: PasswordResetSendLog.name,
+        schema: PasswordResetSendLogSchema,
+      },
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

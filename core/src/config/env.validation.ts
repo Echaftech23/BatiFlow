@@ -12,6 +12,11 @@ export const envValidationSchema = Joi.object({
   OTP_TTL_MINUTES: Joi.number().integer().min(1).max(60).default(15),
   OTP_MAX_SENDS_PER_HOUR: Joi.number().integer().min(1).max(100).default(5),
   OTP_MAX_ATTEMPTS: Joi.number().integer().min(1).max(20).default(5),
+  PASSWORD_RESET_TTL_MINUTES: Joi.number().integer().min(5).max(1440).default(60),
+  PASSWORD_RESET_MAX_SENDS_PER_HOUR: Joi.number().integer().min(1).max(100).default(5),
+  PASSWORD_RESET_LINK_BASE: Joi.string()
+    .allow('')
+    .default('batiflow://reset-password'),
   RESEND_API_KEY: Joi.string().allow('').optional(),
   RESEND_FROM_EMAIL: Joi.string().allow('').optional(),
   FIREBASE_PROJECT_ID: Joi.string().allow('').optional(),

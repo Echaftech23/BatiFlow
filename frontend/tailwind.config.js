@@ -60,8 +60,9 @@ module.exports = {
       fontSize: {
         title: ['24px', { lineHeight: '32px' }],
         subtitle: ['18px', { lineHeight: '26px' }],
-        body: ['16px', { lineHeight: '24px' }],
-        caption: ['14px', { lineHeight: '20px' }],
+        body: ['14px', { lineHeight: '24px' }],
+        medium: ['13px', { lineHeight: '20px' }],
+        caption: ['10px', { lineHeight: '16px' }],
         badge: ['12px', { lineHeight: '16px' }],
       },
       fontFamily: {
@@ -69,6 +70,7 @@ module.exports = {
         'sans-medium': ['Poppins_500Medium'],
         'sans-semibold': ['Poppins_600SemiBold'],
         'sans-bold': ['Poppins_700Bold'],
+        quicksand: ['Quicksand_700Bold'],
       },
       boxShadow: {
         card: '0px 2px 8px rgba(26, 43, 72, 0.08)',

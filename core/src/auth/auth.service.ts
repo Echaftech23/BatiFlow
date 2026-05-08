@@ -225,10 +225,11 @@ export class AuthService {
       )
       .exec();
 
-    const linkBase = (
-      this.config.get<string>('PASSWORD_RESET_LINK_BASE') ??
-      'batiflow://reset-password'
-    ).trim() || 'batiflow://reset-password';
+    const linkBase =
+      (
+        this.config.get<string>('PASSWORD_RESET_LINK_BASE') ??
+        'batiflow://reset-password'
+      ).trim() || 'batiflow://reset-password';
     const sep = linkBase.includes('?') ? '&' : '?';
     const resetUrl = `${linkBase}${sep}token=${encodeURIComponent(rawToken)}`;
 
@@ -236,7 +237,9 @@ export class AuthService {
     try {
       await this.sendPasswordResetEmail(email, resetUrl, ttlMinutes);
     } catch (err) {
-      await this.passwordResetSendLogModel.deleteOne({ _id: sendLog._id }).exec();
+      await this.passwordResetSendLogModel
+        .deleteOne({ _id: sendLog._id })
+        .exec();
       await this.passwordResetModel.deleteOne({ email }).exec();
       throw err;
     }

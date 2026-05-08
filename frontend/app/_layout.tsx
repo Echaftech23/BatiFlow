@@ -32,7 +32,11 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <AppProviders>
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(app)" />
+          <Stack.Screen name="(auth)" />
+        </Stack>
         <StatusBar style="dark" />
       </AppProviders>
     </GestureHandlerRootView>

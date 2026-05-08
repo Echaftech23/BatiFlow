@@ -6,7 +6,7 @@ import {
 
 export class ResetPasswordDto {
   @IsString()
-    @MinLength(40)
+  @MinLength(40)
   token: string;
 
   @IsString()

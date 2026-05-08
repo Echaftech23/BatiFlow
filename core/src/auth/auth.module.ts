@@ -30,7 +30,10 @@ import {
     MongooseModule.forFeature([
       { name: OtpChallenge.name, schema: OtpChallengeSchema },
       { name: OtpSendLog.name, schema: OtpSendLogSchema },
-      { name: PasswordResetChallenge.name, schema: PasswordResetChallengeSchema },
+      {
+        name: PasswordResetChallenge.name,
+        schema: PasswordResetChallengeSchema,
+      },
       {
         name: PasswordResetSendLog.name,
         schema: PasswordResetSendLogSchema,

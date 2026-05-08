@@ -32,9 +32,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel
-      .findOne({ email: email.toLowerCase().trim() })
-      .exec();
+    return this.userModel.findOne({ email: email.toLowerCase().trim() }).exec();
   }
 
   async createOrUpdatePendingRegistration(data: {
@@ -160,10 +158,7 @@ export class UsersService {
 
     const byEmail = await this.userModel.findOne({ email }).exec();
     if (byEmail) {
-      if (
-        byEmail.firebaseUid &&
-        byEmail.firebaseUid !== data.firebaseUid
-      ) {
+      if (byEmail.firebaseUid && byEmail.firebaseUid !== data.firebaseUid) {
         throw new ConflictException(
           'This email is already linked to another account',
         );

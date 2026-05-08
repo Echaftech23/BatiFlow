@@ -20,7 +20,4 @@ export const PasswordResetChallengeSchema = SchemaFactory.createForClass(
   PasswordResetChallenge,
 );
 
-PasswordResetChallengeSchema.index(
-  { expiresAt: 1 },
-  { expireAfterSeconds: 0 },
-);
+PasswordResetChallengeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

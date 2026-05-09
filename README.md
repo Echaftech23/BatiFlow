@@ -1,121 +1,272 @@
 # BatiFlow
 
-Monorepo for the BatiFlow product: an **Expo (React Native)** mobile app and a **NestJS** API backed by **MongoDB**. Email verification uses **Resend**; Google/Apple sign-in uses **Firebase Auth** on the client and **Firebase Admin** on the API.
+**BatiFlow** is a mobile-first appointment management system for teams that schedule client visits and follow-ups. It pairs a polished **Expo (React Native)** client with a **NestJS** API and **MongoDB**, with email verification powered by **Resend** and social sign-in through **Firebase Auth** (verified on the server with **Firebase Admin**).
 
-This repository is intended to be published as **one public GitHub repo** containing both `frontend/` and `core/`.
+This repository is a **monorepo**: the mobile app lives in [`frontend/`](frontend/) and the HTTP API in [`core/`](core/).
 
-## Security and secrets
+---
 
-- **Never commit** real API keys, JWT secrets, OTP peppers, or Firebase private keys. Use `.env` locally (gitignored) and secret managers in production.
-- **Resend:** If an API key was ever exposed in chat, issues, or commits, **rotate it immediately** in the [Resend dashboard](https://resend.com/docs/dashboard/api-keys/introduction) and update deployment secrets only—do not put live keys in `.env.example` or documentation.
-- **JWT / OTP:** Treat `JWT_SECRET` and `OTP_PEPPER` like passwords—long random values, unique per environment.
+## Project overview
+
+BatiFlow helps professionals **register securely**, **sign in with Google**, and **manage a calendar of appointments** from their phone. The app emphasizes a clear booking flow (client details → date → time slot), a **dashboard-style** appointments view, and **one-tap calling** so users can reach clients through the native dialer (`tel:` / `Linking`).
+
+---
+
+## Architecture
+
+### Frontend: feature-based, layered structure
+
+The Expo app organizes code **by capability** (auth, appointments, shared UI) and **by technical layer**:
+
+| Layer | Role |
+| ------- | ------ |
+| **Routes (`app/`)** | Expo Router file-based screens; orchestrate navigation only. |
+| **Feature UI (`components/`)** | Co-located presentational flows (e.g. `components/auth/`, `components/appointments/`). |
+| **Hooks (`hooks/`)** | Mutations/queries per domain (`useLoginMutation`, `useAppointmentsQuery`, …). |
+| **Services (`services/`)** | REST calls, Firebase, secure storage — thin adapters over HTTP and native APIs. |
+| **Shared (`shared/`)** | Zod schemas, mappers, query keys, theme tokens — reusable contracts across features. |
+| **Lib (`lib/`)** | Pure helpers (booking ISO dates, calendar theming, env wiring). |
+| **Providers (`providers/`)** | TanStack Query, error boundaries, and app-wide context. |
+
+This keeps features **easy to evolve** without cross-import spaghetti: routes stay thin, hooks own async state, and schemas stay centralized.
+
+### Backend: NestJS modular monolith
+
+The API in [`core/`](core/) follows Nest’s **module-per-domain** pattern:
+
+- **`AuthModule`** — Registration, OTP email verification (**Resend**), login, password reset, **Firebase ID token** exchange for JWT issuance.
+- **`AppointmentsModule`** — CRUD and slot queries scoped to the authenticated owner.
+- **`UsersModule`** — Profile read/update (`/users/me`).
+- **`FirebaseModule` / `DatabaseModule`** — Admin SDK bootstrap and Mongoose connection.
+- **`Common`** — Exception filters and validation helpers.
+
+Configuration is validated at startup (**Joi** via `env.validation.ts`), so misconfigured deployments fail fast instead of silently misbehaving.
+
+---
+
+## Tech stack
+
+### Frontend
+
+| Technology | Purpose |
+| ---------- | ------- |
+| **Expo (~54)** | Cross-platform runtime, dev client, and native modules. |
+| **Expo Router** | File-based navigation and layouts. |
+| **NativeWind (Tailwind)** | Utility-first styling on React Native. |
+| **TanStack Query** | Server state, caching, and mutations. |
+| **React Hook Form + Zod** | Forms with schema validation (`@hookform/resolvers`). |
+| **Firebase Auth** | Email/password and OAuth (e.g. Google) on device. |
+| **Axios** | HTTP client (see `frontend/api/`). |
+
+### Backend
+
+| Technology | Purpose |
+| ---------- | ------- |
+| **NestJS 11** | Modular HTTP API and DI container. |
+| **MongoDB + Mongoose** | Document persistence for users and appointments. |
+| **Passport JWT** | Bearer token verification on protected controllers. |
+| **Firebase Admin SDK** | Validates Firebase **ID tokens** on `POST /auth/firebase`. |
+| **Resend** | Transactional email (registration OTP; password-reset flows where configured). |
+| **class-validator / class-transformer** | Request DTO validation. |
+
+---
+
+## Core features
+
+- **Registration with email OTP** — Server sends verification codes via **Resend**; client confirms with `verify-email`. Rate limits and TTL are configurable (`OTP_*` env vars).
+- **Google sign-in** — Firebase Auth on the client; **Firebase Admin** verifies `idToken` on the API, then issues a **JWT** for subsequent API calls.
+- **Dashboard & appointments** — Calendar-oriented **rendez-vous** experience with list/detail patterns and mutations for confirm/create/update/delete as exposed by the API.
+- **Booking flow** — Multi-step reservation: client info → date selection → slot selection.
+- **Native dial pad integration** — Tapping phone actions opens the system composer via `tel:` URLs (`AppointmentCard`, day modal), with graceful fallbacks when calling is unavailable.
+
+---
 
 ## Prerequisites
 
 | Requirement | Notes |
 | ----------- | ----- |
-| **Node.js** | LTS (e.g. 20.x) for `core` and `frontend` |
-| **MongoDB** | Local or hosted instance; URI in `core/.env` |
-| **Expo CLI** | Use `npx expo` via project scripts; **Expo Go** or a dev build for devices |
-| **Firebase project** | For client config + Admin SDK on the API (see [Firebase setup](#firebase-setup) below) |
-| **Resend account** | Verified sending domain (or Resend sandbox) for registration OTP emails in non-dev environments |
+| **Node.js** | **LTS (e.g. 20.x)** recommended for both packages. |
+| **MongoDB** | Local (`mongodb://127.0.0.1:27017/...`) or hosted URI. |
+| **Expo tooling** | Use `npm` scripts / `npx expo`; physical devices need reachable API URLs (LAN IP vs `localhost`). |
+| **Firebase project** | Web + native app config + service account JSON fields for Admin. |
+| **Resend** | Verified sender domain for real OTP email in non-dev environments. |
 
-## Repository layout
+---
 
-| Path | Description |
-| ---- | ----------- |
-| [`frontend/`](frontend/) | Expo ~54 app (Expo Router, NativeWind) |
-| [`core/`](core/) | NestJS 11 API |
+## Installation & setup
 
-## Run locally
+### 1. Clone and install dependencies
 
-### 1. API (`core`)
+From the repo root:
+
+```bash
+git clone https://github.com/<your-org>/BatiFlow.git
+cd BatiFlow
+```
+
+#### Backend (`core/`)
 
 ```bash
 cd core
 cp .env.example .env
-# Edit .env: MONGODB_URI, JWT_SECRET (≥16 chars), OTP_PEPPER (≥16 chars), etc.
-
 npm install
+```
+
+Edit **`core/.env`** with MongoDB, JWT/OTP secrets, optional Resend, and Firebase Admin fields (see [Environment variables template](#environment-variables-template)).
+
+```bash
 npm run start:dev
 ```
 
-Default HTTP port is **3000** (override with `PORT` in `.env`).
+Default API port **`3000`** (override with `PORT`).
 
-### 2. Mobile app (`frontend`)
+#### Frontend (`frontend/`)
 
 ```bash
-cd frontend
+cd ../frontend
 cp .env.example .env
-# Set EXPO_PUBLIC_API_URL to the API base URL.
-# On a physical device, use your machine's LAN IP (e.g. http://192.168.1.10:3000), not 127.0.0.1.
-
 npm install
+```
+
+Set **`EXPO_PUBLIC_API_URL`** to your API base URL (no trailing slash):
+
+- **iOS Simulator / same-machine web:** `http://127.0.0.1:3000` is fine.
+- **Android Emulator:** Same host; this project can rewrite emulator loopback — see comments in `.env.example`.
+- **Physical device:** Use your machine’s **LAN IP** (e.g. `http://192.168.1.10:3000`); device and computer must share network reachability.
+
+```bash
 npx expo start
 ```
 
-Expo dev server URLs (`exp://`, `http://localhost:8081`, etc.) must be able to reach the API host you configure.
+Rebuild native projects when Firebase / Google OAuth identifiers or network security settings change.
 
-## Environment variables
+---
 
-Authoritative placeholders live in:
+## Environment variables template
 
-- [`core/.env.example`](core/.env.example)
-- [`frontend/.env.example`](frontend/.env.example)
+Authoritative commented templates:
 
-### API (`core`)
+- **[`core/.env.example`](core/.env.example)** — API secrets and integrations.
+- **[`frontend/.env.example`](frontend/.env.example)** — Public client config (`EXPO_PUBLIC_*`).
 
-| Variable | Required | Purpose |
-| -------- | -------- | ------- |
-| `PORT` | No (default `3000`) | HTTP port |
-| `MONGODB_URI` | Yes | MongoDB connection string |
-| `JWT_SECRET` | Yes (min 16 chars) | Signing key for access tokens |
-| `JWT_EXPIRES_IN` | No | JWT lifetime (e.g. `7d`) |
-| `OTP_PEPPER` | Yes (min 16 chars) | Server-side secret mixed into OTP hashing |
-| `OTP_TTL_MINUTES` | No | OTP validity window |
-| `OTP_MAX_SENDS_PER_HOUR` | No | Rate limit for resend |
-| `OTP_MAX_ATTEMPTS` | No | Max verification attempts per challenge |
-| `RESEND_API_KEY` | For real email | Empty in local dev: OTP may be logged instead of sent |
-| `RESEND_FROM_EMAIL` | When key set | Verified sender (e.g. `notifications@yourdomain.com`) |
-| `FIREBASE_PROJECT_ID` | For `POST /auth/firebase` | Firebase project ID |
-| `FIREBASE_CLIENT_EMAIL` | For `POST /auth/firebase` | Service account email |
-| `FIREBASE_PRIVATE_KEY` | For `POST /auth/firebase` | Service account private key (`\n` for newlines in `.env`) |
+### Backend (`core/`) — required keys
 
-### Mobile (`frontend`)
+| Variable | Required | Description |
+| -------- | -------- | ----------- |
+| `MONGODB_URI` | Yes | MongoDB connection string. |
+| `JWT_SECRET` | Yes (≥ 16 chars) | Signs access JWTs consumed by protected routes. |
+| `OTP_PEPPER` | Yes (≥ 16 chars) | Server secret mixed into OTP hashing. |
+| `JWT_EXPIRES_IN` | No | Token lifetime (e.g. `7d`). Default behavior depends on validation schema. |
+| `OTP_TTL_MINUTES` | No | OTP validity window. |
+| `OTP_MAX_SENDS_PER_HOUR` | No | Rate limit for sending OTPs. |
+| `OTP_MAX_ATTEMPTS` | No | Max verification attempts per challenge. |
+| `RESEND_API_KEY` | For real email | Empty in dev may rely on logged OTP behavior — confirm locally. |
+| `RESEND_FROM_EMAIL` | When sending | Verified sender identity in Resend. |
+| `FIREBASE_PROJECT_ID` | For Google / Firebase login | Matches Firebase Console project. |
+| `FIREBASE_CLIENT_EMAIL` | For `POST /auth/firebase` | Service account email. |
+| `FIREBASE_PRIVATE_KEY` | For `POST /auth/firebase` | PEM private key; use `\n` for newlines in `.env`. |
+| `PASSWORD_RESET_*` | Optional | TTL, rate limits, and deep link base for password reset emails. |
+| `PORT` | No | HTTP port (default **`3000`**). |
 
-| Variable | Required | Purpose |
-| -------- | -------- | ------- |
-| `EXPO_PUBLIC_API_URL` | Yes | Nest API base URL (no trailing slash) |
-| `EXPO_PUBLIC_FIREBASE_*` | Yes (for Firebase Auth) | Web app config from Firebase console |
-| `EXPO_PUBLIC_GOOGLE_*_CLIENT_ID` | For Google sign-in | Web / iOS / Android OAuth client IDs |
+Firebase Admin trio (`FIREBASE_*`) may be omitted at boot per validation but are **required** to use **`POST /auth/firebase`** (Google / Firebase sign-in).
 
-## Firebase setup
+### Frontend (`frontend/`) — public config
 
-Use one Firebase project for both the app and Admin verification.
+| Variable | Required | Description |
+| -------- | -------- | ----------- |
+| `EXPO_PUBLIC_API_URL` | Yes | Nest API base URL (`https://…` or `http://…`). |
+| `EXPO_PUBLIC_FIREBASE_API_KEY` | Yes\* | Firebase Web SDK key. |
+| `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes\* | Firebase auth domain. |
+| `EXPO_PUBLIC_FIREBASE_PROJECT_ID` | Yes\* | Project ID. |
+| `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET` | Yes\* | Storage bucket (project default). |
+| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes\* | Sender ID. |
+| `EXPO_PUBLIC_FIREBASE_APP_ID` | Yes\* | App ID from Firebase Console. |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | For Google Sign-In | Web OAuth client ID (token exchange path). |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | iOS builds | iOS OAuth client ID. |
+| `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` | Android builds | Android OAuth client ID + SHA certs in GCP. |
 
-1. **Create a project** in the [Firebase console](https://console.firebase.google.com/).
-2. **Register apps**
-   - Add an **iOS** app: set **Bundle ID** to match Xcode / `app.json` / EAS (must match what you ship).
-   - Add an **Android** app: set **applicationId** / package name to match your Gradle / Expo config.
-   - Add a **Web** app: copy the `firebaseConfig` values into `EXPO_PUBLIC_FIREBASE_*` in `frontend/.env`.
-3. **Authentication**
-   - Enable **Email/Password** (and any social providers you use).
-   - For **Google**: in Google Cloud Console (linked from Firebase), create OAuth clients for **Web**, **iOS**, and **Android**; add **SHA-1** (and SHA-256 for some flows) for the Android keystore you use for debug/release; paste client IDs into `frontend/.env`.
-   - For **Apple**: enable Sign in with Apple on the Apple Developer account, configure the Firebase Apple provider, and follow Expo’s `expo-apple-authentication` setup for your bundle ID / service ID.
-4. **Service account (API)**
-   - Firebase console → Project settings → **Service accounts** → generate a new private key (JSON).
-   - Map `project_id`, `client_email`, and `private_key` to `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` in `core/.env` (see comments in `.env.example` for multiline key formatting).
-5. **Native config files**
-   - **iOS:** Add `GoogleService-Info.plist` per Expo/Firebase docs (e.g. EAS or `app.json` plugins).
-   - **Android:** Add `google-services.json` in the path expected by your build (Expo prebuild / Gradle).
+\*Required when using Firebase-powered flows; align with **`GoogleService-Info.plist`** (iOS) and **`google-services.json`** (Android) per Expo/Firebase docs.
 
-## Resend setup
+**Never commit** real `.env` files. Rotate any key that was exposed in issues, chat, or history.
 
-1. Create an account at [Resend](https://resend.com/) and verify your **sending domain** (or use their test domain for development only).
-2. Create an **API key**; store it only in `core/.env` or your host’s secrets—**not** in the repo.
-3. Set `RESEND_FROM_EMAIL` to an address on a domain you have verified in Resend.
-4. For local development you may leave `RESEND_API_KEY` empty if the API logs OTPs instead of sending (confirm behavior in your environment).
+---
+
+## Folder structure
+
+High-level layout of the monorepo (representative; omitting `node_modules`, build artifacts, and lockfiles):
+
+```text
+BatiFlow/
+├── README.md
+├── core/                          # NestJS API (backend)
+│   ├── src/
+│   │   ├── main.ts
+│   │   ├── app.module.ts
+│   │   ├── config/
+│   │   ├── database/
+│   │   ├── firebase/
+│   │   ├── common/
+│   │   ├── auth/                  # JWT, OTP, Firebase exchange, guards
+│   │   ├── users/
+│   │   └── appointments/
+│   ├── test/
+│   ├── package.json
+│   └── .env.example
+└── frontend/                      # Expo app
+    ├── app/                       # Expo Router routes & layouts
+    │   ├── _layout.tsx
+    │   ├── index.tsx
+    │   ├── (auth)/
+    │   └── (app)/
+    │       ├── (tabs)/            # Dashboard / settings tabs
+    │       └── booking/           # Multi-step booking
+    ├── components/
+    │   ├── appointments/
+    │   ├── auth/
+    │   ├── logo/
+    │   └── ui/
+    ├── hooks/
+    │   ├── auth/
+    │   └── appointments/
+    ├── services/
+    │   ├── auth/
+    │   ├── appointments/
+    │   ├── firebase/
+    │   └── storage/
+    ├── providers/
+    ├── shared/
+    │   ├── schemas/
+    │   ├── mappers/
+    │   ├── state/
+    │   └── theme/
+    ├── lib/
+    ├── api/
+    ├── assets/
+    ├── package.json
+    ├── app.json
+    └── .env.example
+```
+
+---
+
+## Security
+
+- **JWT access tokens** — Issued after email/password login or successful Firebase verification; sent as **`Authorization: Bearer`** on protected routes (`passport-jwt`, `JwtStrategy`).
+- **Firebase ID tokens** — Short-lived Firebase credentials are verified **only on the server** with **Firebase Admin** before the API mints its own JWT.
+- **Protected API surface** — Controllers such as **`AppointmentsController`** use **`AuthGuard('jwt')`** end-to-end; **`UsersController`** scopes `/users/me` behind the same guard. Unauthenticated callers cannot access owner-bound data.
+- **Secrets hygiene** — `JWT_SECRET`, `OTP_PEPPER`, `RESEND_API_KEY`, and **`FIREBASE_PRIVATE_KEY`** must be treated as production credentials (rotation, secrets manager in deployment, never in client bundles).
+
+---
+
+## Firebase & Resend (quick pointers)
+
+1. **Firebase**: One project for native apps + Admin. Enable **Authentication** providers; add **OAuth clients** for Web / iOS / Android in Google Cloud; map service account JSON fields into **`core/.env`**. Mirror Web config into **`EXPO_PUBLIC_FIREBASE_*`** in the app.
+2. **Resend**: Verify a sending domain; create an API key stored only in server env; set **`RESEND_FROM_EMAIL`** to an allowed address.
+
+For detailed copy-paste steps, follow the comments in **[`core/.env.example`](core/.env.example)** and **[`frontend/.env.example`](frontend/.env.example)**.
+
+---
 
 ## License
 
-See individual packages for license terms if specified.
+See package-level **`license`** fields (e.g. `core/package.json`, `frontend/package.json`) for terms where specified.

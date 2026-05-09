@@ -7,6 +7,7 @@ import {
   registerRequestSchema,
   resendVerificationSchema,
   resetPasswordRequestSchema,
+  verifyPasswordResetRequestSchema,
   verifyEmailSchema,
   type AuthSession,
 } from '@/shared/schemas/authSchemas';
@@ -27,11 +28,22 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
   return data as { message: string };
 }
 
-export async function resetPasswordWithToken(
-  token: string,
+export async function verifyPasswordResetCode(
+  email: string,
+  code: string,
+): Promise<void> {
+  const payload = verifyPasswordResetRequestSchema.parse({ email, code });
+  await axiosInstance.post(resolveApiUrl('/auth/verify-password-reset'), payload, {
+    headers: { 'x-public-request': 'true' },
+  });
+}
+
+export async function resetPasswordWithCode(
+  email: string,
+  code: string,
   password: string,
 ): Promise<void> {
-  const payload = resetPasswordRequestSchema.parse({ token, password });
+  const payload = resetPasswordRequestSchema.parse({ email, code, password });
   await axiosInstance.post(resolveApiUrl('/auth/reset-password'), payload, {
     headers: { 'x-public-request': 'true' },
   });

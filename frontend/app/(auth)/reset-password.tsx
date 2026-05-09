@@ -1,40 +1,40 @@
-import { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from "react-native";
 
-import { Link, router, useLocalSearchParams } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { Link, router, useLocalSearchParams } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 
-import { ForgotPasswordReset } from '@/components/forgot-password';
+import { ForgotPasswordReset } from "@/components/auth/forgot-password";
+import { getPendingPasswordReset } from "@/lib/forgotPasswordSession";
 
-function normalizeToken(raw: string | string[] | undefined): string {
-  if (typeof raw === 'string') {
-    return decodeURIComponent(raw.trim());
+function normalizeEmailParam(
+  raw: string | string[] | undefined,
+): string | null {
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    return raw.trim().toLowerCase();
   }
-  if (Array.isArray(raw) && raw[0]) {
-    return decodeURIComponent(String(raw[0]).trim());
+  if (Array.isArray(raw) && typeof raw[0] === "string" && raw[0].trim()) {
+    return raw[0].trim().toLowerCase();
   }
-  return '';
+  return null;
 }
 
 export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{ token?: string | string[] }>();
-  const token = useMemo(
-    () => normalizeToken(params.token),
-    [params.token],
-  );
+  const params = useLocalSearchParams<{ email?: string | string[] }>();
+  const email = normalizeEmailParam(params.email);
 
-  const tokenOk = token.length >= 40;
+  const session = email ? getPendingPasswordReset(email) : null;
+  const ok = !!(email && session?.code);
 
-  if (!tokenOk) {
+  if (!ok) {
     return (
       <View className="flex-1 justify-center bg-background px-screen-x">
         <StatusBar style="dark" />
         <Text className="text-center font-sans-bold text-title text-navy">
-          Lien invalide
+          Étapes manquantes
         </Text>
         <Text className="mt-3 text-center text-body text-muted-foreground">
-          Ce lien de réinitialisation est incomplet ou a expiré. Demandez un
-          nouveau lien depuis l’écran « Mot de passe oublié ».
+          Validez d&apos;abord le code envoyé par e-mail depuis l&apos;écran
+          « Mot de passe oublié ».
         </Text>
         <Link href="/(auth)/forgot-password" asChild>
           <Pressable className="mt-8 rounded-pill bg-primary py-4">
@@ -58,9 +58,10 @@ export default function ResetPasswordScreen() {
     <View className="flex-1">
       <StatusBar style="light" />
       <ForgotPasswordReset
-        resetToken={token}
-        onBack={() => router.replace('/(auth)/login')}
-        onConfirmSuccess={() => router.replace('/(auth)/login')}
+        email={email!}
+        code={session!.code}
+        onBack={() => router.replace("/(auth)/forgot-password")}
+        onConfirmSuccess={() => router.replace("/(auth)/login")}
       />
     </View>
   );

@@ -48,6 +48,7 @@ axiosInstance.interceptors.response.use(
       status === 401 &&
       (reqUrl.includes("/auth/login") ||
         reqUrl.includes("/auth/verify-email") ||
+        reqUrl.includes("/auth/verify-password-reset") ||
         reqUrl.includes("/auth/reset-password"));
     if (status === 401 && !skipGlobalLogout) {
       await clearAccessToken();

@@ -7,6 +7,7 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { VerifyPasswordResetDto } from './dto/verify-password-reset.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -38,15 +39,22 @@ export class AuthController {
     await this.authService.requestPasswordReset(dto);
     return {
       message:
-        'If an account exists for this email, a password reset link has been sent.',
+        'If an account exists for this email, a password reset code has been sent.',
     };
   }
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.authService.resetPasswordWithToken(dto);
+    await this.authService.resetPasswordWithCode(dto);
     return { message: 'Password has been updated.' };
+  }
+
+  @Post('verify-password-reset')
+  @HttpCode(HttpStatus.OK)
+  async verifyPasswordReset(@Body() dto: VerifyPasswordResetDto) {
+    await this.authService.verifyPasswordResetCode(dto);
+    return { message: 'Code accepted.' };
   }
 
   @Post('resend-verification')

@@ -31,13 +31,6 @@ const CTA_SHADOW = {
   elevation: 10,
 } as const;
 
-function splitName(full: string): { firstName: string; lastName?: string } {
-  const parts = full.trim().split(/\s+/).filter(Boolean);
-  const firstName = parts[0] ?? "";
-  const lastName = parts.length > 1 ? parts.slice(1).join(" ") : undefined;
-  return { firstName, lastName };
-}
-
 export default function RegisterIdentityScreen() {
   const [rootMessage, setRootMessage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -52,7 +45,7 @@ export default function RegisterIdentityScreen() {
     resolver: zodResolver(registerIdentitySchema),
     defaultValues: {
       name: "",
-      trade: "",
+      profession: "",
       phone: "",
       zone: "",
       address: "",
@@ -68,15 +61,13 @@ export default function RegisterIdentityScreen() {
   const onSubmit = async (values: RegisterIdentityFormValues) => {
     setRootMessage(null);
     const email = values.email.trim().toLowerCase();
-    const { firstName, lastName } = splitName(values.name);
     try {
       await postRegister({
         email,
         password: values.password,
         profile: {
-          firstName,
-          lastName,
-          trade: values.trade.trim(),
+          name: values.name.trim(),
+          profession: values.profession.trim(),
           phone: values.phone.trim(),
           zone: values.zone.trim(),
           address: values.address.trim(),
@@ -95,7 +86,7 @@ export default function RegisterIdentityScreen() {
           "email",
           "password",
           "name",
-          "trade",
+          "profession",
           "phone",
           "zone",
           "address",
@@ -140,10 +131,10 @@ export default function RegisterIdentityScreen() {
         />
       </FormField>
 
-      <FormField label="Métier / spécialité" error={errors.trade?.message}>
+      <FormField label="Métier / spécialité" error={errors.profession?.message}>
         <Controller
           control={control}
-          name="trade"
+          name="profession"
           render={({ field: { onChange, onBlur, value } }) => (
             <AppTextInput
               value={value}

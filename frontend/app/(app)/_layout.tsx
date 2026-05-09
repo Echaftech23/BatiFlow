@@ -13,10 +13,7 @@ export default function AppShellLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="welcome" />
-      <Stack.Screen
-        name="booking"
-        options={{ presentation: "modal", animation: "slide_from_bottom" }}
-      />
+      <Stack.Screen name="booking" />
     </Stack>
   );
 }

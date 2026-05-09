@@ -9,11 +9,14 @@ export class PasswordResetChallenge {
   @Prop({ required: true, lowercase: true, trim: true, unique: true })
   email: string;
 
-  @Prop({ required: true, unique: true })
-  tokenHash: string;
+  @Prop({ required: true })
+  codeHash: string;
 
   @Prop({ required: true, index: true })
   expiresAt: Date;
+
+  @Prop({ default: 0 })
+  attempts: number;
 }
 
 export const PasswordResetChallengeSchema = SchemaFactory.createForClass(

@@ -11,8 +11,7 @@ export class PasswordResetSendLog {
   email: string;
 }
 
-export const PasswordResetSendLogSchema = SchemaFactory.createForClass(
-  PasswordResetSendLog,
-);
+export const PasswordResetSendLogSchema =
+  SchemaFactory.createForClass(PasswordResetSendLog);
 
 PasswordResetSendLogSchema.index({ email: 1, createdAt: -1 });

@@ -1,10 +1,10 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, router } from 'expo-router';
-import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { Pressable, Text, View } from 'react-native';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, router } from "expo-router";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Pressable, Text, View } from "react-native";
 
-import { RegisterScreenShell } from '../../../components/register/RegisterScreenShell';
+import { RegisterScreenShell } from "@/components/auth/register/RegisterScreenShell";
 import {
   AppTextInput,
   FieldError,
@@ -13,18 +13,18 @@ import {
   PasswordInput,
   PasswordStrengthBar,
   PrimaryButton,
-} from '../../../components/ui';
-import { applyApiErrorsToForm } from '@/shared/utils/applyApiFieldErrors';
-import { ApiRequestError } from '@/lib/apiClient';
-import { register as postRegister } from '@/services/auth/authService';
-import { saveRegisterDraft } from '../../../lib/registerDraft';
+} from "@/components/ui";
+import { applyApiErrorsToForm } from "@/shared/utils/applyApiFieldErrors";
+import { ApiRequestError } from "@/lib/apiClient";
+import { register as postRegister } from "@/services/auth/authService";
+import { saveRegisterDraft } from "@/lib/registerDraft";
 import {
   registerIdentitySchema,
   type RegisterIdentityFormValues,
-} from '@/shared/schemas/forms';
+} from "@/shared/schemas/forms";
 
 const CTA_SHADOW = {
-  shadowColor: '#F27427',
+  shadowColor: "#F27427",
   shadowOffset: { width: 0, height: 6 },
   shadowOpacity: 0.35,
   shadowRadius: 12,
@@ -33,8 +33,8 @@ const CTA_SHADOW = {
 
 function splitName(full: string): { firstName: string; lastName?: string } {
   const parts = full.trim().split(/\s+/).filter(Boolean);
-  const firstName = parts[0] ?? '';
-  const lastName = parts.length > 1 ? parts.slice(1).join(' ') : undefined;
+  const firstName = parts[0] ?? "";
+  const lastName = parts.length > 1 ? parts.slice(1).join(" ") : undefined;
   return { firstName, lastName };
 }
 
@@ -51,19 +51,19 @@ export default function RegisterIdentityScreen() {
   } = useForm<RegisterIdentityFormValues>({
     resolver: zodResolver(registerIdentitySchema),
     defaultValues: {
-      name: '',
-      trade: '',
-      phone: '',
-      zone: '',
-      address: '',
-      zip: '',
-      city: '',
-      email: '',
-      password: '',
+      name: "",
+      trade: "",
+      phone: "",
+      zone: "",
+      address: "",
+      zip: "",
+      city: "",
+      email: "",
+      password: "",
     },
   });
 
-  const passwordValue = watch('password');
+  const passwordValue = watch("password");
 
   const onSubmit = async (values: RegisterIdentityFormValues) => {
     setRootMessage(null);
@@ -86,25 +86,25 @@ export default function RegisterIdentityScreen() {
       });
       await saveRegisterDraft({ email });
       router.push({
-        pathname: '/(auth)/register/otp',
+        pathname: "/(auth)/register/otp",
         params: { email },
       });
     } catch (e) {
       if (e instanceof ApiRequestError) {
         applyApiErrorsToForm(e.body, setError, setRootMessage, [
-          'email',
-          'password',
-          'name',
-          'trade',
-          'phone',
-          'zone',
-          'address',
-          'zip',
-          'city',
+          "email",
+          "password",
+          "name",
+          "trade",
+          "phone",
+          "zone",
+          "address",
+          "zip",
+          "city",
         ]);
       } else {
         setRootMessage(
-          e instanceof Error ? e.message : 'Impossible de joindre le serveur.',
+          e instanceof Error ? e.message : "Impossible de joindre le serveur.",
         );
       }
     }
@@ -116,10 +116,16 @@ export default function RegisterIdentityScreen() {
       description="Créez votre espace professionnel et commencez à utiliser la plateforme."
     >
       {rootMessage ? (
-        <Text className="font-sans mb-3 text-caption text-destructive">{rootMessage}</Text>
+        <Text className="font-sans mb-3 text-caption text-destructive">
+          {rootMessage}
+        </Text>
       ) : null}
 
-      <FormField label="Nom complet" stacked={false} error={errors.name?.message}>
+      <FormField
+        label="Nom complet"
+        stacked={false}
+        error={errors.name?.message}
+      >
         <Controller
           control={control}
           name="name"
@@ -204,7 +210,7 @@ export default function RegisterIdentityScreen() {
             render={({ field: { onChange, onBlur, value } }) => (
               <AppTextInput
                 value={value}
-                onChangeText={(t) => onChange(t.replace(/\D/g, '').slice(0, 5))}
+                onChangeText={(t) => onChange(t.replace(/\D/g, "").slice(0, 5))}
                 onBlur={onBlur}
                 keyboardType="number-pad"
                 maxLength={5}
@@ -281,8 +287,10 @@ export default function RegisterIdentityScreen() {
       <Link href="/(auth)/login" asChild>
         <Pressable className="mt-6 pb-2">
           <Text className="text-center font-sans text-badge text-muted-foreground">
-            j&apos;ai déjà un compte -{' '}
-            <Text className="font-sans-medium text-badge text-navy">Me connecter</Text>
+            j&apos;ai déjà un compte -{" "}
+            <Text className="font-sans-medium text-badge text-navy">
+              Me connecter
+            </Text>
           </Text>
         </Pressable>
       </Link>

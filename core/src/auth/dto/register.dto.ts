@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsEmail,
-  IsOptional,
   IsString,
   Matches,
   MinLength,
@@ -22,8 +21,7 @@ export class RegisterDto {
   @Matches(PASSWORD_STRENGTH_REGEX, { message: PASSWORD_STRENGTH_MESSAGE })
   password: string;
 
-  @IsOptional()
   @ValidateNested()
   @Type(() => UpdateProfileDto)
-  profile?: UpdateProfileDto;
+  profile: UpdateProfileDto;
 }

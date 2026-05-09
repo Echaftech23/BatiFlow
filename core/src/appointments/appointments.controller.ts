@@ -6,6 +6,10 @@ import {
   Param,
   Patch,
   Post,
+<<<<<<< Updated upstream
+=======
+  Query,
+>>>>>>> Stashed changes
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -25,6 +29,14 @@ export class AppointmentsController {
     return this.appointmentsService.listForOwner(user.sub);
   }
 
+<<<<<<< Updated upstream
+=======
+  @Get('booked-slots')
+  getBookedSlots(@CurrentUser() user: JwtUser, @Query('date') date: string) {
+    return this.appointmentsService.getBookedSlots(user.sub, date);
+  }
+
+>>>>>>> Stashed changes
   @Get(':id')
   findOne(@CurrentUser() user: JwtUser, @Param('id') id: string) {
     return this.appointmentsService.findOne(user.sub, id);

@@ -4,8 +4,13 @@ import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type BookingPageHeaderProps = {
+<<<<<<< Updated upstream
   title: string;
   subtitle: string;
+=======
+  title?: string;
+  subtitle?: string;
+>>>>>>> Stashed changes
 };
 
 export function BookingPageHeader({ title, subtitle }: BookingPageHeaderProps) {
@@ -27,6 +32,7 @@ export function BookingPageHeader({ title, subtitle }: BookingPageHeaderProps) {
         </Pressable>
       </View>
 
+<<<<<<< Updated upstream
       {/* Title + subtitle below the bar */}
       <View className="mt-6 px-screen-x mb-10">
         <Text className="text-center font-bold font-quicksand text-[20px] text-navy">
@@ -36,6 +42,22 @@ export function BookingPageHeader({ title, subtitle }: BookingPageHeaderProps) {
           {subtitle}
         </Text>
       </View>
+=======
+      {title || subtitle ? (
+        <View className="mt-6 px-screen-x mb-10">
+          {title ? (
+            <Text className="text-center font-bold font-quicksand text-[20px] text-navy">
+              {title}
+            </Text>
+          ) : null}
+          {subtitle ? (
+            <Text className="mt-2 text-center font-sans text-body text-muted-foreground">
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+>>>>>>> Stashed changes
     </>
   );
 }

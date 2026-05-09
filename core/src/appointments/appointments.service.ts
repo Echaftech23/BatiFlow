@@ -129,6 +129,28 @@ export class AppointmentsService {
     return appointment.toObject();
   }
 
+<<<<<<< Updated upstream
+=======
+  async getBookedSlots(ownerId: string, date: string): Promise<string[]> {
+    const dayStart = new Date(`${date}T00:00:00`);
+    const dayEnd = new Date(`${date}T23:59:59.999`);
+
+    const appointments = await this.appointmentModel
+      .find({
+        ownerId: new Types.ObjectId(ownerId),
+        startsAt: { $gte: dayStart, $lte: dayEnd },
+      })
+      .select('startsAt')
+      .lean()
+      .exec();
+
+    return appointments.map((a) => {
+      const d = new Date(a.startsAt);
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    });
+  }
+
+>>>>>>> Stashed changes
   private async findOwnedOrThrow(
     ownerId: string,
     appointmentId: string,

@@ -20,3 +20,13 @@ export async function createAppointment(input: unknown): Promise<AppointmentApiD
   const { data } = await axiosInstance.post('/appointments', payload);
   return appointmentApiDocSchema.parse(data);
 }
+<<<<<<< Updated upstream
+=======
+
+export async function getBookedSlots(date: string): Promise<string[]> {
+  const { data } = await axiosInstance.get('/appointments/booked-slots', {
+    params: { date },
+  });
+  return data as string[];
+}
+>>>>>>> Stashed changes

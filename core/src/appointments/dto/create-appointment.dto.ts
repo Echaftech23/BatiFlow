@@ -4,10 +4,16 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+<<<<<<< Updated upstream
+=======
+  Length,
+  Matches,
+>>>>>>> Stashed changes
   MinLength,
   ValidateNested,
 } from 'class-validator';
 
+<<<<<<< Updated upstream
 export class ClientAppointmentDto {
   @IsString()
   @MinLength(1)
@@ -24,14 +30,45 @@ export class ClientAppointmentDto {
   @IsOptional()
   @IsString()
   address?: string;
+=======
+const PHONE_REGEX = /^06\d{8}$/;
+const ZIP_REGEX = /^\d{5}$/;
+
+export class ClientAppointmentDto {
+  @IsString()
+  @MinLength(3)
+  name: string;
+
+  @IsString()
+  @Matches(PHONE_REGEX, {
+    message:
+      'Le numéro doit commencer par 06 et contenir exactement 10 chiffres',
+  })
+  @Length(10, 10, { message: 'Le numéro doit contenir exactement 10 chiffres' })
+  phone: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(3)
+  address: string;
+
+  @IsString()
+  @Matches(ZIP_REGEX, { message: 'Code postal à 5 chiffres' })
+  zip: string;
+>>>>>>> Stashed changes
 
   @IsOptional()
   @IsString()
   city?: string;
+<<<<<<< Updated upstream
 
   @IsOptional()
   @IsString()
   zip?: string;
+=======
+>>>>>>> Stashed changes
 }
 
 export class CreateAppointmentDto {

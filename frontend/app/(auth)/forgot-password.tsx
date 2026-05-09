@@ -1,32 +1,15 @@
-import { useState } from 'react';
-import { View } from 'react-native';
+import { View } from "react-native";
 
-import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
+import { StatusBar } from "expo-status-bar";
+import { router } from "expo-router";
 
-import {
-  ForgotPasswordEmailSent,
-  ForgotPasswordEnterEmail,
-} from '@/components/forgot-password';
-
-type Step = 'email' | 'sent';
+import { ForgotPasswordEnterEmail } from "@/components/auth/forgot-password";
 
 export default function ForgotPasswordScreen() {
-  const [step, setStep] = useState<Step>('email');
-
   return (
     <View className="flex-1">
       <StatusBar style="light" />
-      {step === 'email' ? (
-        <ForgotPasswordEnterEmail
-          onBack={() => router.back()}
-          onLinkSent={() => setStep('sent')}
-        />
-      ) : (
-        <ForgotPasswordEmailSent
-          onBackToLogin={() => router.replace('/(auth)/login')}
-        />
-      )}
+      <ForgotPasswordEnterEmail onBack={() => router.back()} />
     </View>
   );
 }

@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 /** Builds ISO datetimes for the API from a calendar date (YYYY-MM-DD) and HH:mm slot. */
 export function slotToStartsEndsIso(
   dateKey: string,
@@ -7,7 +6,9 @@ export function slotToStartsEndsIso(
 ): { startsAt: string; endsAt: string } {
   const startsAt = new Date(`${dateKey}T${slotHHmm}:00`);
   const endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
-=======
+  return { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() };
+}
+
 /** Builds ISO datetimes from a calendar date (YYYY-MM-DD) and two HH:mm slots. */
 export function rangeToStartsEndsIso(
   dateKey: string,
@@ -16,6 +17,5 @@ export function rangeToStartsEndsIso(
 ): { startsAt: string; endsAt: string } {
   const startsAt = new Date(`${dateKey}T${fromHHmm}:00`);
   const endsAt = new Date(`${dateKey}T${toHHmm}:00`);
->>>>>>> Stashed changes
   return { startsAt: startsAt.toISOString(), endsAt: endsAt.toISOString() };
 }

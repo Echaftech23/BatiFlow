@@ -1,13 +1,13 @@
-import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
-import { Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
+import { Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { RegisterBrandLogo } from './RegisterBrandLogo';
-import { RegisterStepper } from './RegisterStepper';
+import { DarkBrandLogo } from "../../logo/dark";
+import { RegisterStepper } from "./RegisterStepper";
 
 const BACK_SHADOW = {
-  shadowColor: '#1A2B48',
+  shadowColor: "#1A2B48",
   shadowOffset: { width: 0, height: 1 },
   shadowOpacity: 0.08,
   shadowRadius: 4,
@@ -35,7 +35,7 @@ export function RegisterHeader({ currentStep, description }: Props) {
           <ChevronLeft size={22} color="#6B7280" strokeWidth={2.5} />
         </Pressable>
         <View className="items-center pt-0.5">
-          <RegisterBrandLogo width={40} height={35} />
+          <DarkBrandLogo width={40} height={35} />
           <Text className="mx-4 mt-4 text-center text-body leading-6 text-navy">
             {description}
           </Text>

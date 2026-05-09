@@ -4,33 +4,12 @@ import {
   IsEmail,
   IsOptional,
   IsString,
-<<<<<<< Updated upstream
-=======
   Length,
   Matches,
->>>>>>> Stashed changes
   MinLength,
   ValidateNested,
 } from 'class-validator';
 
-<<<<<<< Updated upstream
-export class ClientAppointmentDto {
-  @IsString()
-  @MinLength(1)
-  name: string;
-
-  @IsString()
-  @MinLength(1)
-  phone: string;
-
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @IsOptional()
-  @IsString()
-  address?: string;
-=======
 const PHONE_REGEX = /^06\d{8}$/;
 const ZIP_REGEX = /^\d{5}$/;
 
@@ -57,18 +36,10 @@ export class ClientAppointmentDto {
   @IsString()
   @Matches(ZIP_REGEX, { message: 'Code postal à 5 chiffres' })
   zip: string;
->>>>>>> Stashed changes
 
   @IsOptional()
   @IsString()
   city?: string;
-<<<<<<< Updated upstream
-
-  @IsOptional()
-  @IsString()
-  zip?: string;
-=======
->>>>>>> Stashed changes
 }
 
 export class CreateAppointmentDto {

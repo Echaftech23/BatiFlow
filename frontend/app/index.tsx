@@ -8,5 +8,5 @@ export default function Index() {
 
   if (isPending) return <GlobalLoader label="Demarrage..." />;
 
-  return <Redirect href={data?.isAuthenticated ? '/(app)/welcome' : '/(auth)/login'} />;
+  return <Redirect href={data?.isAuthenticated ? '/(app)/(tabs)/rendez-vous' : '/(auth)/login'} />;
 }

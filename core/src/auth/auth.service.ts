@@ -19,6 +19,7 @@ import type { RegisterDto } from './dto/register.dto';
 import type { ResendVerificationDto } from './dto/resend-verification.dto';
 import type { ForgotPasswordDto } from './dto/forgot-password.dto';
 import type { ResetPasswordDto } from './dto/reset-password.dto';
+import type { VerifyPasswordResetDto } from './dto/verify-password-reset.dto';
 import type { VerifyEmailDto } from './dto/verify-email.dto';
 import type { JwtPayload } from './interfaces/jwt-payload.interface';
 import {
@@ -208,34 +209,26 @@ export class AuthService {
     );
     const ttlMinutes = this.config.get<number>(
       'PASSWORD_RESET_TTL_MINUTES',
-      60,
+      15,
     );
 
     await this.assertPasswordResetSendRate(email, maxSends);
 
-    const rawToken = crypto.randomBytes(32).toString('base64url');
-    const tokenHash = this.hashPasswordResetToken(rawToken);
+    const code = this.generatePasswordResetCode();
+    const codeHash = this.hashOtp(code);
     const expiresAt = new Date(Date.now() + ttlMinutes * 60 * 1000);
 
     await this.passwordResetModel
       .findOneAndUpdate(
         { email },
-        { $set: { tokenHash, expiresAt } },
+        { $set: { codeHash, expiresAt, attempts: 0 } },
         { upsert: true, new: true },
       )
       .exec();
 
-    const linkBase =
-      (
-        this.config.get<string>('PASSWORD_RESET_LINK_BASE') ??
-        'batiflow://reset-password'
-      ).trim() || 'batiflow://reset-password';
-    const sep = linkBase.includes('?') ? '&' : '?';
-    const resetUrl = `${linkBase}${sep}token=${encodeURIComponent(rawToken)}`;
-
     const sendLog = await this.passwordResetSendLogModel.create({ email });
     try {
-      await this.sendPasswordResetEmail(email, resetUrl, ttlMinutes);
+      await this.sendPasswordResetCodeEmail(email, code, ttlMinutes);
     } catch (err) {
       await this.passwordResetSendLogModel
         .deleteOne({ _id: sendLog._id })
@@ -245,25 +238,38 @@ export class AuthService {
     }
   }
 
-  async resetPasswordWithToken(dto: ResetPasswordDto): Promise<void> {
-    const tokenHash = this.hashPasswordResetToken(dto.token);
-    const challenge = await this.passwordResetModel
-      .findOne({ tokenHash })
-      .exec();
+  async resetPasswordWithCode(dto: ResetPasswordDto): Promise<void> {
+    const email = dto.email.toLowerCase().trim();
+    const maxAttempts = this.config.get<number>('OTP_MAX_ATTEMPTS', 5);
+
+    const challenge = await this.passwordResetModel.findOne({ email }).exec();
 
     if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
-      throw new UnauthorizedException('Invalid or expired reset link');
+      throw new UnauthorizedException('Code invalide ou expiré');
+    }
+
+    if (challenge.attempts >= maxAttempts) {
+      throw new UnauthorizedException(
+        'Trop de tentatives. Demandez un nouveau code.',
+      );
+    }
+
+    const ok = this.verifyOtpHash(dto.code, challenge.codeHash);
+    if (!ok) {
+      challenge.attempts += 1;
+      await challenge.save();
+      throw new UnauthorizedException('Code incorrect');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
     try {
       await this.usersService.updatePasswordHashForVerifiedEmail(
-        challenge.email,
+        email,
         passwordHash,
       );
     } catch (err) {
       if (err instanceof NotFoundException) {
-        throw new UnauthorizedException('Invalid or expired reset link');
+        throw new UnauthorizedException('Code invalide ou expiré');
       }
       throw err;
     }
@@ -271,12 +277,34 @@ export class AuthService {
     await this.passwordResetModel.deleteOne({ _id: challenge._id }).exec();
   }
 
-  private hashPasswordResetToken(rawToken: string): string {
-    const pepper = this.config.getOrThrow<string>('OTP_PEPPER');
-    return crypto
-      .createHash('sha256')
-      .update(`${rawToken}:${pepper}`, 'utf8')
-      .digest('hex');
+  /** Validates the code without changing the password (step before reset). */
+  async verifyPasswordResetCode(dto: VerifyPasswordResetDto): Promise<void> {
+    const email = dto.email.toLowerCase().trim();
+    const maxAttempts = this.config.get<number>('OTP_MAX_ATTEMPTS', 5);
+
+    const challenge = await this.passwordResetModel.findOne({ email }).exec();
+
+    if (!challenge || challenge.expiresAt.getTime() < Date.now()) {
+      throw new UnauthorizedException('Code invalide ou expiré');
+    }
+
+    if (challenge.attempts >= maxAttempts) {
+      throw new UnauthorizedException(
+        'Trop de tentatives. Demandez un nouveau code.',
+      );
+    }
+
+    const ok = this.verifyOtpHash(dto.code, challenge.codeHash);
+    if (!ok) {
+      challenge.attempts += 1;
+      await challenge.save();
+      throw new UnauthorizedException('Code incorrect');
+    }
+  }
+
+  private generatePasswordResetCode(): string {
+    const n = crypto.randomInt(0, 10_000);
+    return n.toString().padStart(4, '0');
   }
 
   private async assertPasswordResetSendRate(
@@ -297,16 +325,16 @@ export class AuthService {
     }
   }
 
-  private async sendPasswordResetEmail(
+  private async sendPasswordResetCodeEmail(
     to: string,
-    resetUrl: string,
+    code: string,
     ttlMinutes: number,
   ): Promise<void> {
     const from = this.config.getOrThrow<string>('RESEND_FROM_EMAIL');
 
     if (!this.resend) {
       this.logger.warn(
-        `RESEND_API_KEY is not set; password reset link (dev): ${resetUrl}`,
+        `RESEND_API_KEY is not set; password reset code (dev): ${code}`,
       );
       return;
     }
@@ -318,12 +346,10 @@ export class AuthService {
       text: [
         'Bonjour,',
         '',
-        'Pour choisir un nouveau mot de passe, ouvrez ce lien dans l’application BatiFlow :',
-        resetUrl,
+        `Votre code de réinitialisation BatiFlow est : ${code}`,
+        `Il expire dans ${String(ttlMinutes)} minutes.`,
         '',
-        `Ce lien expire dans ${String(ttlMinutes)} minutes.`,
-        '',
-        'Si vous n’avez pas demandé cette réinitialisation, ignorez ce message.',
+        "Si vous n'avez pas demandé cette réinitialisation, ignorez ce message.",
       ].join('\n'),
     });
 
@@ -398,7 +424,7 @@ export class AuthService {
         `Votre code de vérification BatiFlow est : ${code}`,
         `Il expire dans ${String(ttlMinutes)} minutes.`,
         '',
-        'Si vous n’avez pas demandé ce code, ignorez ce message.',
+        "Si vous n'avez pas demandé ce code, ignorez ce message.",
       ].join('\n'),
     });
 

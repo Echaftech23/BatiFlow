@@ -129,8 +129,6 @@ export class AppointmentsService {
     return appointment.toObject();
   }
 
-<<<<<<< Updated upstream
-=======
   async getBookedSlots(ownerId: string, date: string): Promise<string[]> {
     const dayStart = new Date(`${date}T00:00:00`);
     const dayEnd = new Date(`${date}T23:59:59.999`);
@@ -150,7 +148,6 @@ export class AppointmentsService {
     });
   }
 
->>>>>>> Stashed changes
   private async findOwnedOrThrow(
     ownerId: string,
     appointmentId: string,

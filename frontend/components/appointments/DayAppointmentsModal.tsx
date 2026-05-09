@@ -150,12 +150,6 @@ export function DayAppointmentsModal({ day, items, onClose, onConfirm }: Props) 
           <ScrollView
             className="grow-0"
             showsVerticalScrollIndicator={false}
-<<<<<<< Updated upstream
-            contentContainerClassName="p-screen-x"
-          >
-            {items.map((item, i) => (
-              <View key={item.id} className={i > 0 ? "mt-[14px]" : ""}>
-=======
             contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 16 }}
           >
             {items.map((item, i) => (
@@ -172,7 +166,6 @@ export function DayAppointmentsModal({ day, items, onClose, onConfirm }: Props) 
                     }}
                   />
                 )}
->>>>>>> Stashed changes
                 <ModalAppointmentCard item={item} onConfirm={onConfirm} />
               </View>
             ))}

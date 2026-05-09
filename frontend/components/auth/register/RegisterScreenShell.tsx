@@ -44,7 +44,7 @@ export function RegisterScreenShell({
         <StatusBar style="dark" />
         <KeyboardAvoidingView
           style={fill}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
           <View style={fill}>
             {header}
@@ -69,7 +69,7 @@ export function RegisterScreenShell({
       <StatusBar style="dark" />
       <KeyboardAvoidingView
         style={fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
           style={fill}

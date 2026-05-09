@@ -13,9 +13,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ForgotPasswordAuthShell } from "./AuthShell";
-import { FormField, PasswordInput, PrimaryButton } from "../ui";
+import { FormField, PasswordInput, PrimaryButton } from "../../ui";
 import { ApiError } from "@/api/types";
-import { resetPasswordWithToken } from "@/services/auth/authService";
+import { clearPendingPasswordReset } from "@/lib/forgotPasswordSession";
+import { resetPasswordWithCode } from "@/services/auth/authService";
 import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
@@ -52,13 +53,15 @@ const RULES: Rule[] = [
 ];
 
 type Props = {
-  resetToken: string;
+  email: string;
+  code: string;
   onBack: () => void;
   onConfirmSuccess: () => void;
 };
 
 export function ForgotPasswordReset({
-  resetToken,
+  email,
+  code,
   onBack,
   onConfirmSuccess,
 }: Props) {
@@ -69,8 +72,11 @@ export function ForgotPasswordReset({
 
   const resetMutation = useMutation({
     mutationFn: ({ password }: { password: string }) =>
-      resetPasswordWithToken(resetToken, password),
-    onSuccess: () => onConfirmSuccess(),
+      resetPasswordWithCode(email, code, password),
+    onSuccess: () => {
+      clearPendingPasswordReset();
+      onConfirmSuccess();
+    },
   });
 
   const {
@@ -117,7 +123,10 @@ export function ForgotPasswordReset({
         "choisissez un nouveau mot de passe",
         "pour sécuriser votre compte.",
       ]}
-      onBack={onBack}
+      onBack={() => {
+        clearPendingPasswordReset();
+        onBack();
+      }}
     >
       <KeyboardAvoidingView
         className="flex-1"

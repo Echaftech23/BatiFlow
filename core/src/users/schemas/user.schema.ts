@@ -6,13 +6,10 @@ export type UserDocument = HydratedDocument<User>;
 @Schema({ _id: false })
 export class UserProfile {
   @Prop()
-  firstName?: string;
+  name?: string;
 
   @Prop()
-  lastName?: string;
-
-  @Prop()
-  trade?: string;
+  profession?: string;
 
   @Prop()
   phone?: string;

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft } from "lucide-react-native";
 
-import { LoginBrandLogo } from "../LoginBrandLogo";
+import { LightBrandLogo } from "../../logo/Light";
 
 const HEADER_BG = "#15325B";
 
@@ -34,8 +34,7 @@ export function ForgotPasswordAuthShell({
   children,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const copy =
-    headerTypography === "paragraph" ? headerLines.join(" ") : null;
+  const copy = headerTypography === "paragraph" ? headerLines.join(" ") : null;
 
   return (
     <View className="flex-1" style={{ backgroundColor: HEADER_BG }}>
@@ -54,7 +53,7 @@ export function ForgotPasswordAuthShell({
             <ChevronLeft size={22} color="#000000" strokeWidth={2} />
           </Pressable>
           <View className="items-center pt-14">
-            <LoginBrandLogo width={40} height={35} />
+            <LightBrandLogo width={40} height={35} />
             {headerTypography === "paragraph" && copy ? (
               <Text className="mx-4 mt-6 text-center font-medium text-[16px] leading-normal text-white">
                 {copy}

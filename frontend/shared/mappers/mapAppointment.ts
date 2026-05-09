@@ -34,19 +34,12 @@ export function mapAppointmentDoc(doc: AppointmentApiDoc): Appointment {
     id: String(doc._id),
     clientName: doc.client.name,
     serviceLabel: doc.serviceLabel,
-<<<<<<< Updated upstream
-=======
-    notes: doc.notes,
->>>>>>> Stashed changes
     dateKey,
     timeLabel,
     durationLabel: formatDurationFr(start, end),
     phone: doc.client.phone,
     status: doc.status,
     addressLine: buildAddressLine(doc.client),
-<<<<<<< Updated upstream
     notes: doc.notes,
-=======
->>>>>>> Stashed changes
   };
 }

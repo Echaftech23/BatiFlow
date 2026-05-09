@@ -1,12 +1,12 @@
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import * as AppleAuthentication from 'expo-apple-authentication';
-import * as AuthSession from 'expo-auth-session';
-import * as Google from 'expo-auth-session/providers/google';
-import Constants from 'expo-constants';
-import * as Crypto from 'expo-crypto';
-import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image } from 'react-native';
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import * as AppleAuthentication from "expo-apple-authentication";
+import * as AuthSession from "expo-auth-session";
+import * as Google from "expo-auth-session/providers/google";
+import Constants from "expo-constants";
+import * as Crypto from "expo-crypto";
+import * as WebBrowser from "expo-web-browser";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Image } from "react-native";
 import {
   ActivityIndicator,
   Alert,
@@ -14,47 +14,47 @@ import {
   Pressable,
   Text,
   View,
-} from 'react-native';
+} from "react-native";
 import {
   GoogleAuthProvider,
   OAuthProvider,
   signInWithCredential,
-} from '@firebase/auth';
+} from "@firebase/auth";
 
-import { setAccessToken } from '@/services/storage/secureStore';
-import { exchangeFirebaseIdTokenForJwt } from '@/lib/batiflowAuth';
-import { queryClient } from '@/services/query/queryClient';
-import { getFirebaseAuth } from '@/services/firebase/firebaseAuth';
-import { randomNonce } from '../lib/randomNonce';
+import { setAccessToken } from "@/services/storage/secureStore";
+import { exchangeFirebaseIdTokenForJwt } from "@/lib/batiflowAuth";
+import { queryClient } from "@/services/query/queryClient";
+import { getFirebaseAuth } from "@/services/firebase/firebaseAuth";
+import { randomNonce } from "../../lib/randomNonce";
 
 WebBrowser.maybeCompleteAuthSession();
 
 function isAppleSignInCanceled(e: unknown): boolean {
   return (
-    typeof e === 'object' &&
+    typeof e === "object" &&
     e !== null &&
-    'code' in e &&
-    (e as { code?: string }).code === 'ERR_REQUEST_CANCELED'
+    "code" in e &&
+    (e as { code?: string }).code === "ERR_REQUEST_CANCELED"
   );
 }
 
 type SocialAuthPanelProps = {
   onAuthenticated?: () => void;
   /** Compact “Se connecter avec” row used on the login mock. */
-  mode?: 'default' | 'login';
+  mode?: "default" | "login";
 };
 
 export function SocialAuthPanel({
   onAuthenticated,
-  mode = 'default',
+  mode = "default",
 }: SocialAuthPanelProps) {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
-  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
+  const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "";
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
   const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
-  const isExpoGo = Constants.executionEnvironment === 'storeClient';
+  const isExpoGo = Constants.executionEnvironment === "storeClient";
 
   const googleConfig = useMemo(
     () => ({
@@ -62,8 +62,8 @@ export function SocialAuthPanel({
       iosClientId: iosClientId || undefined,
       androidClientId: androidClientId || undefined,
       redirectUri: AuthSession.makeRedirectUri({
-        scheme: 'batiflow',
-        path: 'oauthredirect',
+        scheme: "batiflow",
+        path: "oauthredirect",
       }),
     }),
     [androidClientId, iosClientId, webClientId],
@@ -75,12 +75,12 @@ export function SocialAuthPanel({
   const exchangeSession = useCallback(async () => {
     const idToken = await getFirebaseAuth().currentUser?.getIdToken();
     if (!idToken) {
-      throw new Error('No Firebase session after sign-in');
+      throw new Error("No Firebase session after sign-in");
     }
     const session = await exchangeFirebaseIdTokenForJwt(idToken);
     await setAccessToken(session.accessToken);
     await queryClient.invalidateQueries();
-    if (mode === 'login') {
+    if (mode === "login") {
       setStatus(null);
     } else {
       setStatus(`API JWT OK — ${session.user.email}`);
@@ -89,15 +89,15 @@ export function SocialAuthPanel({
   }, [mode, onAuthenticated]);
 
   useEffect(() => {
-    if (response?.type !== 'success') {
+    if (response?.type !== "success") {
       return;
     }
     const idToken =
-      typeof response.params.id_token === 'string'
+      typeof response.params.id_token === "string"
         ? response.params.id_token
         : undefined;
     if (!idToken) {
-      setStatus('Google did not return id_token');
+      setStatus("Google did not return id_token");
       return;
     }
 
@@ -108,7 +108,7 @@ export function SocialAuthPanel({
         await signInWithCredential(getFirebaseAuth(), credential);
         await exchangeSession();
       } catch (e) {
-        setStatus(e instanceof Error ? e.message : 'Google sign-in failed');
+        setStatus(e instanceof Error ? e.message : "Google sign-in failed");
       } finally {
         setBusy(false);
       }
@@ -116,18 +116,18 @@ export function SocialAuthPanel({
   }, [exchangeSession, response]);
 
   const googleConfigured =
-    Platform.OS === 'web'
+    Platform.OS === "web"
       ? Boolean(webClientId)
-      : Platform.OS === 'ios'
+      : Platform.OS === "ios"
         ? Boolean(iosClientId && webClientId)
         : Boolean(androidClientId && webClientId);
 
   const onGoogle = () => {
     if (isExpoGo) {
       Alert.alert(
-        'Dev build requis',
-        'Google Sign-In ne fonctionne pas dans Expo Go (le proxy auth.expo.io est obsolète).\n\n' +
-          'Lancez un dev build :\n  npx expo run:ios\n  npx expo run:android',
+        "Dev build requis",
+        "Google Sign-In ne fonctionne pas dans Expo Go (le proxy auth.expo.io est obsolète).\n\n" +
+          "Lancez un dev build :\n  npx expo run:ios\n  npx expo run:android",
       );
       return;
     }
@@ -135,30 +135,30 @@ export function SocialAuthPanel({
       getFirebaseAuth();
     } catch (e) {
       Alert.alert(
-        'Firebase',
-        e instanceof Error ? e.message : 'Check EXPO_PUBLIC_FIREBASE_* in .env',
+        "Firebase",
+        e instanceof Error ? e.message : "Check EXPO_PUBLIC_FIREBASE_* in .env",
       );
       return;
     }
     if (!googleConfigured) {
       Alert.alert(
-        'Configuration',
-        'Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID and the native client ID for this platform (see .env.example).',
+        "Configuration",
+        "Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID and the native client ID for this platform (see .env.example).",
       );
       return;
     }
     if (!request) {
-      Alert.alert('Google', 'Auth request is not ready yet.');
+      Alert.alert("Google", "Auth request is not ready yet.");
       return;
     }
     void promptAsync();
   };
 
   const onApple = async () => {
-    if (Platform.OS !== 'ios') {
+    if (Platform.OS !== "ios") {
       Alert.alert(
-        'Apple',
-        'Sign in with Apple runs on iOS (dev build or device).',
+        "Apple",
+        "Sign in with Apple runs on iOS (dev build or device).",
       );
       return;
     }
@@ -166,8 +166,8 @@ export function SocialAuthPanel({
       getFirebaseAuth();
     } catch (e) {
       Alert.alert(
-        'Firebase',
-        e instanceof Error ? e.message : 'Check EXPO_PUBLIC_FIREBASE_* in .env',
+        "Firebase",
+        e instanceof Error ? e.message : "Check EXPO_PUBLIC_FIREBASE_* in .env",
       );
       return;
     }
@@ -186,9 +186,9 @@ export function SocialAuthPanel({
         nonce,
       });
       if (!apple.identityToken) {
-        throw new Error('Apple did not return identityToken');
+        throw new Error("Apple did not return identityToken");
       }
-      const provider = new OAuthProvider('apple.com');
+      const provider = new OAuthProvider("apple.com");
       const credential = provider.credential({
         idToken: apple.identityToken,
         rawNonce,
@@ -197,14 +197,14 @@ export function SocialAuthPanel({
       await exchangeSession();
     } catch (e) {
       if (!isAppleSignInCanceled(e)) {
-        setStatus(e instanceof Error ? e.message : 'Apple sign-in failed');
+        setStatus(e instanceof Error ? e.message : "Apple sign-in failed");
       }
     } finally {
       setBusy(false);
     }
   };
 
-  if (mode === 'login') {
+  if (mode === "login") {
     return (
       <View className="mt-10 w-full">
         <View className="flex-row items-center gap-3">
@@ -220,14 +220,17 @@ export function SocialAuthPanel({
             onPress={onGoogle}
             className="flex-1 items-center justify-center rounded-pill border border-border bg-surface py-3.5"
             style={{
-              shadowColor: '#000',
+              shadowColor: "#000",
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.06,
               shadowRadius: 3,
               elevation: 2,
             }}
           >
-            <Image source={require('../assets/icons/google.png')} style={{ width: 22, height: 22 }} />
+            <Image
+              source={require("@/assets/icons/google.png")}
+              style={{ width: 22, height: 22 }}
+            />
           </Pressable>
           <Pressable
             disabled={busy}
@@ -236,7 +239,7 @@ export function SocialAuthPanel({
             }}
             className="flex-1 items-center justify-center rounded-pill border border-border bg-surface py-3.5 disabled:opacity-50"
             style={{
-              shadowColor: '#000',
+              shadowColor: "#000",
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.06,
               shadowRadius: 3,
@@ -280,12 +283,12 @@ export function SocialAuthPanel({
         </Text>
       </Pressable>
 
-      {Platform.OS === 'ios' ? (
+      {Platform.OS === "ios" ? (
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
           cornerRadius={12}
-          style={{ width: '100%', height: 48 }}
+          style={{ width: "100%", height: 48 }}
           onPress={() => {
             if (busy) return;
             void onApple();

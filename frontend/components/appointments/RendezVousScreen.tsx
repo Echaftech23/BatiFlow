@@ -13,10 +13,10 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ApiError } from "@/api/types";
-import { AppointmentCard } from "../AppointmentCard";
-import { DayAppointmentsModal } from "./DayAppointmentsModal";
+import { AppointmentCard } from "@/components/appointments/AppointmentCard";
+import { DayAppointmentsModal } from "@/components/appointments/DayAppointmentsModal";
 import { GlobalLoader } from "@/components/ui/GlobalLoader";
-import { RegisterBrandLogo } from "@/components/register/RegisterBrandLogo";
+import { DarkBrandLogo } from "@/components/logo/dark";
 import { useAppointmentsQuery } from "@/hooks/appointments/useAppointmentsQuery";
 import { useConfirmAppointmentMutation } from "@/hooks/appointments/useConfirmAppointmentMutation";
 import { BatiCalendar } from "@/lib/calendarTheme";
@@ -87,7 +87,7 @@ export default function RendezVousScreen() {
         style={{ paddingTop: insets.top + 12 }}
       >
         <View className="flex-row items-center justify-between">
-          <RegisterBrandLogo width={40} height={36} />
+          <DarkBrandLogo width={40} height={36} />
           <Pressable
             hitSlop={24}
             accessibilityRole="button"

@@ -71,11 +71,8 @@ interface DayComponentProps {
     selectedTextColor?: string;
     marked?: boolean;
     dotColor?: string;
-<<<<<<< Updated upstream
-=======
     disabled?: boolean;
     disableTouchEvent?: boolean;
->>>>>>> Stashed changes
   };
   onPress?: (date: { dateString: string }) => void;
 }
@@ -89,13 +86,8 @@ function CalendarDayComponent({
   if (!date) return null;
 
   const isToday = state === "today";
-<<<<<<< Updated upstream
-  const isDisabled = state === "disabled";
-  const isSelected = marking?.selected;
-=======
   const isDisabled = state === "disabled" || marking?.disabled === true;
   const isSelected = marking?.selected && !isDisabled;
->>>>>>> Stashed changes
   const isMarked = marking?.marked;
 
   const showCircle = isSelected || isMarked;
